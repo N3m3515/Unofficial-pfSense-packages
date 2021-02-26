@@ -3,7 +3,7 @@
  * postfix_queue.php
  *
  * part of Unofficial packages for pfSense(R) softwate
- * Copyright (c) 2011-2017 Marcello Coutinho
+ * Copyright (c) 2011-2020 Marcello Coutinho
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,11 +41,11 @@ define('POSTFIX_LOCALBASE','/usr/local');
 
 if ($_REQUEST['cmd']!=""){
 	 ?>
-                <link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.min.css">
+                <link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.postfix.css">
                 <link rel="stylesheet" href="/vendor/datatable/Buttons-1.2.4/css/buttons.dataTables.min.css">
                 <script src="/vendor/jquery/jquery-1.12.0.min.js" type="text/javascript"></script>
                 <script src="/vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
-                <script src="/vendor/datatable/js/jquery.dataTables.min.js" type="text/javascript"></script>
+                <script src="/vendor/datatable/js/jquery.dataTables.postfix.js" type="text/javascript"></script>
                 <script src="/vendor/datatable/Buttons-1.2.4/js/dataTables.buttons.min.js" type="text/javascript"></script>
                 <script src="/vendor/datatable/JSZip-2.5.0/jszip.min.js" type="text/javascript"></script>
                 <script src="/vendor/datatable/pdfmake-0.1.18/build/pdfmake.min.js" type="text/javascript"></script>
@@ -185,10 +185,10 @@ include("head.inc");
 		$tab_array[] = array(gettext("About"), false, "/postfix_about.php");
 		display_top_tabs($tab_array);
 	?>
-<link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.postfix.css">
 <script src="/vendor/jquery/jquery-1.12.0.min.js" type="text/javascript"></script>
 <script src="/vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
-<script src="/vendor/datatable/js/jquery.dataTables.min.js" type="text/javascript"></script>
+<script src="/vendor/datatable/js/jquery.dataTables.postfix.js" type="text/javascript"></script>
 <div class="panel panel-default">
         <div class="panel-heading"><h2 class="panel-title"><?=gettext("Postfix Queue"); ?></h2></div>
         <div class="panel-body">

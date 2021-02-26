@@ -3,7 +3,7 @@
  * mailscanner.inc
  *
  * part of Unofficial packages for pfSense(R) softwate
- * Copyright (c) 2011-2017 Marcello Coutinho
+ * Copyright (c) 2011-2019 Marcello Coutinho
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ require_once("config.inc");
 require_once("globals.inc");
 require_once("notices.inc");
 require_once("util.inc");
-require_once("xmlrpc.inc");
 require_once("xmlrpc_client.inc");
 
 
@@ -210,8 +209,8 @@ function sync_package_mailscanner($via_rpc=false) {
 	$find_archive=(preg_match('/FindArchiveByContent/',$attachments['features'])?"yes":"no");
 	$microsoft=(preg_match('/UnpackMicrosoftDocuments/',$attachments['features'])?"yes":"no");
 	$zip_attachments=(preg_match('/ZipAttachments/',$attachments['features'])?"yes":"no");
-	$scan_pdf=(preg_match('/ScanPDF/',$attachments['features']) ? "yes" : "no");
-	$deliver_suspicious_pdf=(preg_match('/DeliverSuspiciousPDF/',$attachments['features']) ? "yes" : "no");
+	//$scan_pdf=(preg_match('/ScanPDF/',$attachments['features']) ? "yes" : "no");
+	//$deliver_suspicious_pdf=(preg_match('/DeliverSuspiciousPDF/',$attachments['features']) ? "yes" : "no");
 	$zip_file=($attachments['attachment_filename']?$attachments['attachment_filename']:'MessageAttachments.zip');
 	$zip_exclude=($attachments['attachment_extension_exclude']?$attachments['attachment_extension_exclude']:".zip .rar .gz .tgz .jpg .jpeg .mpg .mpe .mpeg .mp3 .rpm .htm .html .eml");
 	$unzip_max_per_archive=($attachments['attachment_max_per_archive']?$attachments['attachment_max_per_archive']:"0");
@@ -320,7 +319,7 @@ Language Strings = %report-dir%/languages.conf
 		$load_samples++;
 	}
 	if($antispam['sa_pref_file'] == ""){
-		$config['installedpackages']['msantispam']['config'][0]['sa_pref_file']=base64_encode(file_get_contents($mailscanner_dir.'/spam.assassin.prefs.conf.sample'));
+		$config['installedpackages']['msantispam']['config'][0]['sa_pref_file']=base64_encode(file_get_contents($mailscanner_dir.'/spamassassin.conf.sample'));
 		$load_samples++;
 	}
 	if($antispam['rbl_file'] == ""){
@@ -328,9 +327,9 @@ Language Strings = %report-dir%/languages.conf
 		$load_samples++;
 	}
 	if($antispam['mcp_pref_file'] == ""){
-		$config['installedpackages']['msantispam']['config'][0]['mcp_pref_file']=base64_encode(file_get_contents($mailscanner_dir.'/mcp/mcp.spam.assassin.prefs.conf.sample'));
+		$config['installedpackages']['msantispam']['config'][0]['mcp_pref_file']=base64_encode(file_get_contents($mailscanner_dir.'/mcp/mcp.spamassassin.conf.sample'));
 		copy($mailscanner_dir.'/mcp/10_example.cf.sample',$mailscanner_dir.'/mcp/10_example.cf');
-		copy($mailscanner_dir.'/mcp/v320.pre.sample',$mailscanner_dir.'/mcp/v320.pre');
+		//copy($mailscanner_dir.'/mcp/v320.pre.sample',$mailscanner_dir.'/mcp/v320.pre');
 		$load_samples++;
 	}
 	if($antispam['bounce'] == ""){
@@ -407,7 +406,7 @@ Language Strings = %report-dir%/languages.conf
 	}
 	#exit;
 	if($load_samples > 0)
-		write_config();
+		write_config('mailscanner - Load sample configuration.');
 
 /*
 Phishing Safe Sites File = %etc-dir%/phishing.safe.sites.conf
@@ -448,7 +447,7 @@ Country Sub-Domains List = %etc-dir%/country.domains.conf
 			copy($mfile.".sample",$mfile);
 
 
-	#update spam.assassin.prefs.conf
+	#update spamassassin.conf
 	$sa_temp=ms_text_area_decode($config['installedpackages']['msantispam']['config'][0]['sa_pref_file']);
 	$pattern[]='/#ifplugin/';
 	$pattern[]='/#dcc_path/';
@@ -533,7 +532,7 @@ Country Sub-Domains List = %etc-dir%/country.domains.conf
 	#rint "pre".$sa_temp;exit;
 	$config['installedpackages']['msantispam']['config'][0]['sa_pref_file']=base64_encode($sa_temp);
 	check_mailscanner_cron();
-	write_config();
+	write_config('mailscanner - update package configuration.');
 
 	file_put_contents($mailscanner_dir."/MailScanner.conf", $mc, LOCK_EX);
 	file_put_contents($mailscanner_dir."/filename.rules.conf",ms_text_area_decode($config['installedpackages']['msattachments']['config'][0]['filename_rules']),LOCK_EX);
@@ -541,9 +540,9 @@ Country Sub-Domains List = %etc-dir%/country.domains.conf
 	file_put_contents($mailscanner_dir."/archives.filename.rules.conf",ms_text_area_decode($config['installedpackages']['msattachments']['config'][0]['filename_rules']),LOCK_EX);
 	file_put_contents($mailscanner_dir."/archives.filetype.rules.conf",ms_text_area_decode($config['installedpackages']['msattachments']['config'][0]['filetype_rules']),LOCK_EX);
 	file_put_contents($mailscanner_dir."/country.domains.conf",ms_text_area_decode($config['installedpackages']['mscontent']['config'][0]['country_domains']),LOCK_EX);
-	file_put_contents($mailscanner_dir.'/spam.assassin.prefs.conf',$sa_temp,LOCK_EX);
+	file_put_contents($mailscanner_dir.'/spamassassin.conf',$sa_temp,LOCK_EX);
 	file_put_contents($mailscanner_dir.'/spam.lists.conf',ms_text_area_decode($config['installedpackages']['msantispam']['config'][0]['rbl_file']),LOCK_EX);
-	file_put_contents($mailscanner_dir.'/mcp/mcp.spam.assassin.prefs.conf',ms_text_area_decode($config['installedpackages']['msantispam']['config'][0]['mcp_pref_file']),LOCK_EX);
+	file_put_contents($mailscanner_dir.'/mcp/mcp.spamassassin.conf',ms_text_area_decode($config['installedpackages']['msantispam']['config'][0]['mcp_pref_file']),LOCK_EX);
 	file_put_contents($mailscanner_dir.'/rules/bounce.rules',ms_text_area_decode($config['installedpackages']['msantispam']['config'][0]['bounce']),LOCK_EX);
 	file_put_contents($mailscanner_dir.'/rules/max.message.size.rules',ms_text_area_decode($config['installedpackages']['msantispam']['config'][0]['max_message_size']),LOCK_EX);
 	file_put_contents($mailscanner_dir.'/rules/spam.whitelist.rules',ms_text_area_decode($config['installedpackages']['msantispam']['config'][0]['spam_whitelist']),LOCK_EX);
@@ -835,8 +834,112 @@ function mailscanner_validate_input($post, &$input_errors) {
 	}
 }
 
+function get_github_plugin($url, $glob_array = "", $dest_dir = "", $msg = "", $extra_dir = "") {
+    if ($dest_dir != "") {
+        if (! is_dir($dest_dir)) {
+            mkdir($dest_dir,0755,true);
+        }
+    }
+    $parts = explode ("/", $url);
+    $tmp_dir = "/tmp/github";
+    system("rm -rf $tmp_dir");
+    if ($extra_dir != "") {
+        $zip_file = "/tmp/$extra_dir.zip";
+        $extra_dir = "/" . $extra_dir;
+    } else {
+        $zip_file = "/tmp/{$parts[4]}.zip";
+    }
+    mkdir ($tmp_dir, 0755, true);
+    if ($msg != "") {
+        print "\nDownloading $msg...";
+    } else {
+        print "\nDownloading {$parts[4]} from {$parts[3]}@github...";
+    }
+    file_put_contents($zip_file, fopen($url, 'r'));
+    if( file_exists($zip_file) ) {
+        print "done\n";
+        
+        $zip = new ZipArchive;
+        $res = $zip->open($zip_file);
+        if ($res === TRUE) {
+            $zip->extractTo($tmp_dir . $extra_dir);
+            $zip->close();
+            foreach (glob("$tmp_dir/*") as $a) {
+                //print "$a\n";
+                if (is_array($glob_array)) {
+                    foreach ($glob_array as $glob_parameter) {
+                        foreach (glob ("$a/$glob_parameter") as $plugin_path) {
+                            $parts = explode ("/", $plugin_path);
+                            $file = array_pop($parts);
+                            //print "$plugin_path, $dest_dir/$file\n";
+                            copy ($plugin_path, "$dest_dir/$file");
+                            if (preg_match("/\.sh/", $file)) {
+                                chmod ("$dest_dir/$file", 0755);
+                            }
+                        }
+                    }
+                    return;
+                }
+                if ($dest_dir != "") {
+                    system ("mv $a $dest_dir");
+                } else {
+                    return ($a);
+                }
+            }
+        } else {
+            echo 'Failed to extract spftools\n';
+        }
+    } else {
+        print "failed\n";
+    }
+    
+}
+
+
 function mailscanner_php_install_command() {
-	sync_package_mailscanner();
+    // spf-tools
+    $url = "https://github.com/jsarenik/spf-tools/archive/master.zip";
+    $plugin_dir = "/usr/local/bin/spf-tools";
+    get_github_plugin($url, "", $plugin_dir);
+    
+    // spamassassin-extremeshok_fromreplyto
+    $glob_parameters = array('/plugins/*pm', '/*cf');
+    $plugins_dir = "/usr/local/etc/mail/spamassassin/plugins";
+    $url = "https://github.com/extremeshok/spamassassin-extremeshok_fromreplyto/archive/master.zip";
+    get_github_plugin($url, $glob_parameters, $plugins_dir);
+    
+    // DecodeShortURLs
+    $glob_parameters = array('/*pm', '/*cf');
+    $url = "https://github.com/smfreegard/DecodeShortURLs/archive/master.zip";
+    get_github_plugin($url, $glob_parameters, $plugins_dir);
+    
+    //pdfid
+    $glob_parameters = array('/p*py','/p*ini');
+    $plugin_dir = "/usr/local/bin";
+    $url = "http://didierstevens.com/files/software/pdfid_v0_2_5.zip";
+    get_github_plugin($url, $glob_parameters, $plugin_dir, "pdfid from didierstevens", "pdfpy" );
+    system ('sed -i \'.bak\' "s@/usr/bin/env python@/usr/local/bin/python2@" /usr/local/bin/p*.py');
+    system("chmod +x /usr/local/bin/p*py");
+    
+    //unofficial sigs for improving malware protection
+    $glob_parameters = array('/clamav-unofficial-*.sh');
+    $plugin_dir = "/usr/local/sbin";
+    $url = "https://github.com/extremeshok/clamav-unofficial-sigs/archive/master.zip";
+    $dir = get_github_plugin($url, $glob_parameters, $plugin_dir);
+    system('sed -i \'.bak\' "s@!/bin/bash@!/usr/local/bin/bash@" /usr/local/sbin/clamav-unofficial-sigs.sh');
+    $plugin_log_dir = "/var/log/clamav-unofficial-sigs";
+    if (!file_exists($plugin_log_dir)) {
+        mkdir ($plugin_log_dir);
+    }
+    $plugin_conf_dir = "/etc/clamav-unofficial-sigs";
+    if (!file_exists($plugin_conf_dir)) {
+        mkdir ($plugin_conf_dir);
+    }
+    copy ("/tmp/github/clamav-unofficial-sigs-master/config/os.pfsense.conf", "/etc/clamav-unofficial-sigs/os.conf");
+    copy ("/tmp/github/clamav-unofficial-sigs-master/config/user.conf", "/etc/clamav-unofficial-sigs/user.conf");
+    system('sed -i \'.bak\' \'s@clam_user=.*@clam_user="postfix"@\' ' . $plugin_conf_dir .'/os.conf');
+    system('sed -i \'.bak\' \'s@#user_configuration.*@user_configuration_complete="yes"@\' ' . $plugin_conf_dir .'/user.conf');
+    sync_package_mailscanner();
 }
 
 function mailscanner_php_deinstall_command() {

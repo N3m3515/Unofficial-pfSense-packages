@@ -4,7 +4,7 @@
  * postfix_about.php
  *
  * part of Unofficial packages for pfSense(R) softwate
- * Copyright (c) 2011-2017 Marcello Coutinho
+ * Copyright (c) 2011-2020 Marcello Coutinho
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,7 @@ $tab_array[] = array(gettext("About"), true, "/postfix_about.php");
 display_top_tabs($tab_array);
 
 ?>
-<link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.postfix.css">
 <div class="panel panel-default">
         <div class="panel-heading"><h2 class="panel-title"><?=gettext("About Postfix Forwarder"); ?></h2></div>
         <div class="panel-body">

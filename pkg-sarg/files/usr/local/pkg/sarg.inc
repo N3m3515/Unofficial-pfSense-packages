@@ -149,7 +149,7 @@ function sarg_configure_cron() {
 		// update cron
 		if ($cron_found > 0) {
 			$config['cron'] = $new_cron;
-			write_config();
+			write_config('sarg - write package cron tasks.');
 			configure_cron();
 		}
 	}
@@ -172,10 +172,26 @@ function sarg_resync() {
 function run_sarg($id = -1) {
 	global $config, $g, $sarg_proxy;
 
+	
+	$log_files = array('e2guardian' => '/var/log/e2guardian/access.log',
+	                   'squid' => '/var/squid/logs/access.log');
+	
 	$cmd = SARG_DIR . "/bin/sarg";
+	if (is_array($config['installedpackages']['sarg']['config'])) {
+	    $proxy_server_log = $config['installedpackages']['sarg']['config'][0]['proxy_server'];
+	    if (array_key_exists($proxy_server_log,$log_files)) {
+	        $rs_file = $log_files[$proxy_server_log];
+	    } else {
+	        die("log file configuration not found");
+	    }
+	}
+	
 	if ($id >= 0 && is_array($config['installedpackages']['sargschedule']['config'])) {
 	    $rsg = $config['installedpackages']['sargschedule']['config'][$id];
+	    $rsg2 = $config['installedpackages']['sarg']['config'];
 		$args = $rsg['args'];
+		$logs = $rsg['logfiles'];
+		$fsuffix = $fsuffix = preg_replace("/\W/", "", $rsg['foldersuffix']);
 		$gzip = $rsg['gzip'];
 		$find = $rsg['find'];
 		$gziplevel = $rsg['gziplevel'];
@@ -183,10 +199,25 @@ function run_sarg($id = -1) {
 	} else {
 		$args = $_POST['args'];
 		$gzip = $_POST['gzip'];
+		$logs = $_POST['logfiles'];
+		$fsuffix = preg_replace("/\W/", "", $_POST['foldersuffix']);
 		$find = $_POST['find'];
 		$gziplevel = $_POST['gziplevel'];
 		$daylimit = "";
 	}
+	
+	if ($logs == "all logs") {
+	    $rs_file = $rs_file . "*";
+	}
+	
+	$args .= " -l $rs_file ";
+	$args .= " -o /usr/local/sarg-reports";
+	if ($fsuffix != "") {
+	    safe_mkdir("/usr/local/sarg-reports/" . $fsuffix, 0755, true);
+	    $args .= "/$fsuffix";
+	    symlink ( "/usr/local/sarg-reports//images" , "/usr/local/sarg-reports/$fsuffix/images" );
+	}
+	print "$cmd -f /usr/local/etc/sarg/sarg.conf $args\n";
 	$find = (preg_match("/(\d+)/", $find, $find_matches) ? $find_matches[1] : "60");
 	log_error("[sarg] Force refresh now with {$args} args, compress({$gzip}).");
 	$gzip_script = "#!/bin/sh\n";
@@ -197,7 +228,7 @@ function run_sarg($id = -1) {
 for a in `/usr/bin/find /usr/local/sarg-reports -cmin -{$find} -type d -mindepth 1 -maxdepth 1`
 do
 echo \$a
-/usr/bin/find \$a -name "*html" | /usr/bin/xargs gzip {$gziplevel}
+/usr/bin/find \$a -name "*html" | /usr/bin/xargs gzip -f {$gziplevel}
 done
 
 EOF;
@@ -274,9 +305,13 @@ function sync_package_sarg() {
 			// leave this case without break to include squid log file on squidguard option
 		case 'squid':
 			$access_log = $sarg_proxy['squid_config'];
-			if (is_array($config['installedpackages']['squid']['config'])) {
-				if (file_exists($config['installedpackages']['squid']['config'][0]['log_dir'] . '/access.log')) {
-					$access_log = $config['installedpackages']['squid']['config'][0]['log_dir'] . '/access.log';
+			$pkg_squid = "squid";
+			if (is_array($config['installedpackages']['squiddev'])) {
+			    $pkg_squid = "squiddev";
+			}
+			if (is_array($config['installedpackages'][$pkg_squid]['config'])) {
+			    if (file_exists($config['installedpackages'][$pkg_squid]['config'][0]['log_dir'] . '/access.log')) {
+			        $access_log = $config['installedpackages'][$pkg_squid]['config'][0]['log_dir'] . '/access.log';
 				}
 			}
 			break;
@@ -372,7 +407,7 @@ function sync_package_sarg() {
 
 	// write config if any file from filesystem was loaded
 	if ($update_conf > 0) {
-		write_config();
+		write_config('sarg - update configuration.');
 	}
 
 	sarg_sync_on_changes();
@@ -399,12 +434,15 @@ function sarg_validate_input($post, &$input_errors) {
 
 	# check squid
 	if ($_POST["proxy_server"] == "squid") {
-		if (is_array($config['installedpackages']['squid'])) {
-		    exit;
-			if (!$config['installedpackages']['squid']['log_enabled']) {
+	    $pkg_squid = "squid";
+	    if (is_array($config['installedpackages']['squiddev'])) {
+	        $pkg_squid = "squiddev";
+	    }
+	    if (is_array($config['installedpackages'][$pkg_squid])) {
+	        if ($config['installedpackages'][$pkg_squid]['config'][0]['log_enabled'] != "on") {
 				$input_errors[] = 'Squid logging is not enabled';
 			}
-			if (! file_exists($config['installedpackages']['squid']['config'][0]['log_dir'] . '/access.log')) {
+			if (! file_exists($config['installedpackages'][$pkg_squid]['config'][0]['log_dir'] . '/access.log')) {
 			    $input_errors[] = 'Squid log file does not exists.';
 			}
 		} else {

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE packagegui SYSTEM "../schema/packages.dtd">
+<?xml-stylesheet type="text/xsl" href="../xsl/package.xsl"?>
+<packagegui>
+	<copyright>
+	<![CDATA[
+/* $Id$ */
+/* ====================================================================================== */
+/*
+	sgldap.xml
+	part of Unofficial packages for pfSense
+	Copyright (C) 2019 Marcello Coutinho
+	All rights reserved.
+*/
+/* ====================================================================================== */
+/*
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted under APACHE2 license rules
+*/
+/* ====================================================================================== */
+	]]>
+	</copyright>
+	<name>sgldap</name>
+	<version>1.0</version>
+	<title>sgldap</title>
+	<include_file>/usr/local/pkg/sgldap.inc</include_file>
+	<custom_php_install_command>
+		sgldap_install();
+	</custom_php_install_command>
+	<custom_php_deinstall_command>
+		sgldap_deinstall();
+	</custom_php_deinstall_command>
+</packagegui>

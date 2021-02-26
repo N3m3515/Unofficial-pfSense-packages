@@ -3,7 +3,7 @@
  * postfix.php
  *
  * part of Unofficial packages for pfSense(R) softwate
- * Copyright (c) 2011-2017 Marcello Coutinho
+ * Copyright (c) 2011-2020 Marcello Coutinho
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,14 +23,13 @@ require_once("/etc/inc/util.inc");
 require_once("/etc/inc/functions.inc");
 require_once("/etc/inc/pkg-utils.inc");
 require_once("/etc/inc/globals.inc");
-require_once("xmlrpc.inc");
 require_once("xmlrpc_client.inc");
 require_once("/usr/local/pkg/postfix.inc");
 
 define('POSTFIX_DEBUG', '0');
 $uname = posix_uname();
 if ($uname['machine'] == 'amd64') {
-        ini_set('memory_limit', '768M');
+        ini_set('memory_limit', '900M');
 }
 
 function get_remote_log() {
@@ -304,6 +303,11 @@ function grep_log(){
 			else if(preg_match("/(\w+\s+\d+\s+[0-9,:]+) (\S+) postfix.cleanup\W\d+\W+(\w+): message-id=\<(.*)\>/",$line,$email)) {
 				check_sid_day($email[3],$grep_day);
 				$stm_queue[$sa[$email[3]]].="update mail_from set msgid='".$email[4]."' where sid='".$email[3]."';\n";
+			}
+			#Sep 19 02:55:06 srvch011 postfix/cleanup[90887]: 98D8D19D4D: milter-reject: END-OF-MESSAGE from mx-outaag173.informz.net[64.129.122.173]: 4.7.0 DKIM key retrieval failed; from=<nde_5708584426.4@informz.net> to=<user.sirname@corp.com> proto=ESMTP helo=<mx-outaag173.informz.net>
+			else if(preg_match("/(\w+\s+\d+\s+[0-9,:]+) (\S+) postfix.cleanup\W\d+\W+(\w+): milter-reject: END-OF-MESSAGE from \S+: (.*); from=\</",$line,$email)) {
+			    check_sid_day($email[3],$grep_day);
+			    $stm_queue[$sa[$email[3]]].= "update mail_to set status=(select id from mail_status where info='reject'), status_info='".$email[4]."' where from_id in (select id from mail_from where sid='".$email[3]."' and server='".$email[2]."');\n";
 			}
 			#Nov 14 02:40:05 srvch011 postfix/qmgr[46834]: BC5931F4F13: from=<ceag@mx.crmcom.br>, size=32727, nrcpt=1 (queue active)
 			else if(preg_match("/(\w+\s+\d+\s+[0-9,:]+) (\S+) postfix.qmgr\W\d+\W+(\w+): from=\<(.*)\>\W+size=(\d+)/",$line,$email)){
@@ -739,17 +743,13 @@ if ($_REQUEST['files']!= ""){
 		//to see examples, and select datatable modules to download see
 		// https://datatables.net/download/
 		?>
-                <link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.min.css">
-		<link rel="stylesheet" href="/vendor/datatable/Buttons-1.2.4/css/buttons.dataTables.min.css">
-                <script src="/vendor/jquery/jquery-1.12.0.min.js" type="text/javascript"></script>
-                <script src="/vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
-                <script src="/vendor/datatable/js/jquery.dataTables.min.js" type="text/javascript"></script>
-		<script src="/vendor/datatable/Buttons-1.2.4/js/dataTables.buttons.min.js" type="text/javascript"></script>
-		<script src="/vendor/datatable/JSZip-2.5.0/jszip.min.js" type="text/javascript"></script>
-		<script src="/vendor/datatable/pdfmake-0.1.18/build/pdfmake.min.js" type="text/javascript"></script>
-		<script src="/vendor/datatable/pdfmake-0.1.18/build/vfs_fonts.js" type="text/javascript"></script>
-		<script src="/vendor/datatable/Buttons-1.2.4/js/buttons.html5.min.js" type="text/javascript"></script>
-		<script src="/vendor/datatable/ColReorder-1.3.2/js/dataTables.colReorder.min.js" type="text/javascript"></script>
+		<script src="/vendor/jquery/jquery-1.12.0.min.js" type="text/javascript"></script>
+		<script src="/vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.18/b-1.5.6/b-html5-1.5.6/b-print-1.5.6/datatables.min.css"/>
+
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+		<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.18/b-1.5.6/b-html5-1.5.6/b-print-1.5.6/datatables.min.js"></script>
 
 		<br/>
                 <?php
@@ -798,6 +798,7 @@ $(document).ready(function() {
     $('#dtresult').DataTable({
 	scrollY:        '60vh',
 	scrollCollapse: true,
+	pageLength: 30,
 	dom: 'Bfrtip',
 	colReorder: {
             realtime: false

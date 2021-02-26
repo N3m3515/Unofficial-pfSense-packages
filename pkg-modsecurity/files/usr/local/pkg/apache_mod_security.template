@@ -1,0 +1,13 @@
+<?php
+// Mod_security enabled?
+if($mods_settings['enablemodsecurity']=="on") {
+	$enable_mod_security = true;
+	$mod_security = <<< EOF
+# -- Rule engine initialization ----------------------------------------------
+
+modsecurity on
+#modsecurity_rules_file /usr/local/etc/modsecurity/modsecurity.conf
+# modsecurity load files
+
+EOF;
+}

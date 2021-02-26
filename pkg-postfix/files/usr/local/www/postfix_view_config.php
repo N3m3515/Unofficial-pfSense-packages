@@ -3,7 +3,7 @@
  * postfix_view_config.php
  *
  *
- * Copyright (c) 2011-2017 Marcello Coutinho
+ * Copyright (c) 2011-2020 Marcello Coutinho
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,7 +84,7 @@ $pf_version=substr(trim(file_get_contents("/etc/version")),0,3);
         display_top_tabs($tab_array);
 ?>
 
-<link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="/vendor/datatable/css/jquery.dataTables.postfix.css">
 <div class="panel panel-default">
 	<div class="panel-heading"><h2 class="panel-title"><?=gettext("View Postfix configuration files"); ?></h2></div>
         <div class="panel-body">
